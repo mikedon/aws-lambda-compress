@@ -69,7 +69,7 @@ class LambdaFunction {
 		});
 		let archive = archiver.create('zip', {});
 		archive.pipe(stream);		
-		archive.directory(path.relative("", this.directory));
+		archive.directory(path.relative("", this.directory), "/");
 		this.dependencies.forEach(dependency => {						
 			archive.directory(path.relative("", dependency.location));
 		});		

@@ -9,7 +9,7 @@ declare module "archiver" {
         pipe(writeStream: FS.WriteStream): void;
         append(readStream: FS.ReadStream, name: nameInterface): void;
         finalize(): void;
-		directory(path: string): void;
+		directory(path: string, destpath?: string, data?: any): void;
     }
     
     interface Options {
