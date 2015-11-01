@@ -1,0 +1,33 @@
+{
+  "name": "aws-lambda-compress",
+  "version": "0.0.1",
+  "description": "Creates zip files of your code that can be uploaded to AWS Lambda.",
+  "main": "build/index.js",
+  "bin": {
+    "aws-lambda-compress": "./bin/aws-lambda-compress"
+  },
+  "scripts": {
+    "clean": "rm -rf build && rm -rf dist",
+    "tsc": "tsc",
+    "build": "npm run clean && npm run tsc",
+    "test": "test"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "compress"
+  ],
+  "author": "miked",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^1.8.0-dev.20151029"
+  },
+  "dependencies": {
+    "archiver": "^0.15.1",
+    "bluebird": "^2.10.1",
+    "es6-promisify": "^3.0.0",
+    "glob": "^5.0.14",
+    "minimist": "^1.2.0",
+    "require-analyzer": "^0.5.0"
+  }
+}

@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {    
+        "module": "commonjs",   
+        "target": "es6",
+        "noImplicitAny": false,
+        "outDir": "build",
+        "rootDir": "src",
+        "sourceMap": false
+    },
+    "files": [
+        "typings/tsd.d.ts",
+        "src/index.ts",
+        "src/cli.ts",
+        "src/typedef/es6-promisify.d.ts",
+        "src/typedef/require-analyzer.d.ts",
+        "src/typedef/archiver-ext.d.ts"    
+    ]
+}
