@@ -6,8 +6,7 @@ function run(){
 	let args = parseArgs(process.argv.slice(2));
 	let cmd: string = args._.shift();
 	switch(cmd){
-		case "compress":
-			console.log("calling compress...");
+		case "compress":			
 			compress(args["srcDir"], args["excludes"], args["outputDir"]);			
 			break;		
 		case "help":
