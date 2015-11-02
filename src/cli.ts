@@ -7,7 +7,7 @@ function run(){
 	let cmd: string = args._.shift();
 	switch(cmd){
 		case "compress":			
-			compress(args["srcDir"], args["excludes"], args["outputDir"]);			
+			compress(args["srcDir"], args["pattern"], args["excludes"], args["outputDir"]);			
 			break;		
 		case "help":
 			console.log("HELP ME");
