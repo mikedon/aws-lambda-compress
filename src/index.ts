@@ -79,7 +79,7 @@ class LambdaFunction {
 		process.chdir(originalWorkingDirectory);
 	}
 	
-	createArchive(outputDirectory: string, srcDir: string){
+	createArchive(outputDirectory: string, srcDir: string, extras: string[]){
 		let stream = fs.createWriteStream(`${outputDirectory}/${this.name}.zip`);
 		stream.on("error", err => {
 			console.log(err);				
@@ -88,21 +88,29 @@ class LambdaFunction {
 		let archive = archiver.create('zip', {});
 		archive.pipe(stream);
 		//place lambda function inside a directory in the zip - this way the source and final locations are the same		
-		archive.directory(path.relative("", this.directory), `/${this.name}`);		
-		this.dependencies.forEach(dependency => {			
+		archive.directory(path.relative("", this.directory), `/${this.name}`);
+		for(let dependency of this.dependencies){							
 			if(!dependency.relative){				
 				archive.directory(path.relative("", dependency.location));	
 			}else{
 				//if its a relative module then we want the location in the zip to be relative to source dir
 				archive.directory(path.relative("", dependency.location), path.relative(srcDir, dependency.location));
 			}									
-		});		
+		}
+		for(let extra of extras){			
+			if(extra.lastIndexOf(path.sep) === extra.length - 1){
+				archive.directory(extra);	
+			}else{
+				archive.file(extra);
+			}
+			
+		}
 		archive.finalize();
 	}
 }
 
 //TODO handle extra stuff that needs to go into each zip - like config and .env
-export async function compress(srcDir: string, pattern: string, excludes : string[], outputDir: string){	
+export async function compress(srcDir: string, pattern: string, excludes : string[], outputDir: string, extras: string[]){	
 	try{	
 		let lambdaFunctions: LambdaFunction[] = [];
 		let dependencies: {[key: string]: string[]} = {};
@@ -122,7 +130,7 @@ export async function compress(srcDir: string, pattern: string, excludes : strin
 				lambdaFunction.analyzeDependencies(excludes);								
 				let outputDirectory = `${process.cwd()}/${outputDir}`;			
 				await makeDirectory(outputDirectory); //await
-				lambdaFunction.createArchive(outputDir, srcDir);
+				lambdaFunction.createArchive(outputDir, srcDir, extras);
 			}											
 		}	
 	}catch(err){

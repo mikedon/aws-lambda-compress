@@ -10,6 +10,7 @@ declare module "archiver" {
         append(readStream: FS.ReadStream, name: nameInterface): void;
         finalize(): void;
 		directory(path: string, destpath?: string, data?: any): void;
+        file(filePath: string, data?: any);
     }
     
     interface Options {
