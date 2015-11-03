@@ -9,6 +9,7 @@ import * as mkdirp from "mkdirp";
 
 let readDir = promisify<string[], string>(fs.readdir);
 let makeDirectory = promisify(mkdirp);
+let stat = promisify<fs.Stats, string>(fs.stat);
 
 class Dependency {
 	name: string;
@@ -100,20 +101,29 @@ class LambdaFunction {
 	}
 }
 
+//TODO handle extra stuff that needs to go into each zip - like config and .env
 export async function compress(srcDir: string, pattern: string, excludes : string[], outputDir: string){	
 	try{	
 		let lambdaFunctions: LambdaFunction[] = [];
 		let dependencies: {[key: string]: string[]} = {};
 		let files = await readDir(srcDir); //await
-		let directories: string[] = files.filter((file)=>{
-			return !fs.statSync(path.join(srcDir, file)).isFile() && file.match(pattern) != null;
-		});
+		let directories: string[] = await Promise.all(files.map((file) => { //await			
+			if(file.match(pattern) != null){
+				return stat(path.join(srcDir, file)).then(fileStat => {		
+					if(!fileStat.isFile()){						
+						return file;
+					}
+				});
+			}	
+		}));				
 		for(let directory of directories){		
-			let lambdaFunction = new LambdaFunction(directory, srcDir);					
-			lambdaFunction.analyzeDependencies(excludes);								
-			let outputDirectory = `${process.cwd()}/${outputDir}`;			
-			await makeDirectory(outputDirectory); //await
-			lambdaFunction.createArchive(outputDir, srcDir);											
+			if(directory){ //we will get undefined as a directory if it didn't meet the criteria above				
+				let lambdaFunction = new LambdaFunction(directory, srcDir);					
+				lambdaFunction.analyzeDependencies(excludes);								
+				let outputDirectory = `${process.cwd()}/${outputDir}`;			
+				await makeDirectory(outputDirectory); //await
+				lambdaFunction.createArchive(outputDir, srcDir);
+			}											
 		}	
 	}catch(err){
 		console.error(err);
