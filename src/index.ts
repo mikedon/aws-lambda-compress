@@ -6,6 +6,7 @@ import * as path from "path";
 import * as detective from "detective";
 import * as promisify from "es6-promisify";
 import * as mkdirp from "mkdirp";
+import * as resolve from "resolve";
 
 let readDir = promisify<string[], string>(fs.readdir);
 let makeDirectory = promisify(mkdirp);
@@ -25,8 +26,8 @@ class Dependency {
 		if(this.name.indexOf(".") > -1){
 			this.relative = true;
 			this.location = path.dirname(path.resolve("", this.name));
-		}else{
-			let dependencyLocationTokens = require.resolve(this.name).split(path.sep);														
+		}else{										
+			let dependencyLocationTokens = resolve.sync(this.name, {basedir: process.cwd()}).split(path.sep);														
 			let doneBuildingPath = false;
 			let i = 0;
 			while(!doneBuildingPath){
@@ -36,7 +37,7 @@ class Dependency {
 				}else{
 					i++;	
 				}								
-			}	
+			}				
 		}						
 	}
 }

@@ -13,6 +13,7 @@
         "src/cli.ts",
         "src/typedef/es6-promisify.d.ts",        
         "src/typedef/detective.d.ts",
-        "src/typedef/archiver-ext.d.ts"  
+        "src/typedef/archiver-ext.d.ts",
+        "src/typedef/resolve.d.ts"  
     ]
 }
