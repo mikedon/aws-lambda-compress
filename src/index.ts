@@ -12,7 +12,7 @@ let readDir = promisify<string[], string>(fs.readdir);
 let makeDirectory = promisify(mkdirp);
 let stat = promisify<fs.Stats, string>(fs.stat);
 
-class Dependency {
+export class Dependency {
 	name: string;
 	location: string = "";
 	version: string;
@@ -21,8 +21,7 @@ class Dependency {
 		this.name = name;		
 	}
 	
-	buildLocation(){		
-		//require.resolve doesn't seem to handle relative modules
+	buildLocation(){
 		if(this.name.indexOf(".") > -1){
 			this.relative = true;
 			this.location = path.dirname(path.resolve("", this.name));
@@ -110,7 +109,6 @@ class LambdaFunction {
 	}
 }
 
-//TODO handle extra stuff that needs to go into each zip - like config and .env
 export async function compress(srcDir: string, pattern: string, excludes : string[], outputDir: string, extras: string[]){	
 	try{	
 		let lambdaFunctions: LambdaFunction[] = [];
@@ -138,5 +136,3 @@ export async function compress(srcDir: string, pattern: string, excludes : strin
 		console.error(err);
 	}		
 };
-
-module.exports = compress;

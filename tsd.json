@@ -16,6 +16,9 @@
     },
     "mkdirp/mkdirp.d.ts": {
       "commit": "eb59a40d3c2f3257e34ec2ede181046230814a41"
+    },
+    "jasmine/jasmine.d.ts": {
+      "commit": "001ca36ba58cef903c4c063555afb07bbc36bb58"
     }
   }
 }

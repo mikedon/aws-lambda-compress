@@ -10,7 +10,7 @@
     "clean": "rm -rf build && rm -rf dist",
     "tsc": "tsc",
     "build": "npm run clean && npm run tsc",
-    "test": "test"
+    "test": "node_modules/.bin/dharma --configFile=dharma.conf.js"
   },
   "keywords": [
     "aws",
@@ -20,6 +20,7 @@
   "author": "miked",
   "license": "MIT",
   "devDependencies": {
+    "dharma": "0.0.2",
     "typescript": "^1.8.0-dev.20151029"
   },
   "dependencies": {
