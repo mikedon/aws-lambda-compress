@@ -1,4 +1,4 @@
 #!/usr/local/bin/node --harmony
 "use strict";
 let run = require("../build/cli");
-run();
+run.run();

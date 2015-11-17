@@ -1,8 +1,8 @@
 "use strict";
-let parseArgs = require("minimist");
-var compress = require("./index");
+import * as parseArgs from "minimist";
+import {compress} from "./index";
 
-function run(){
+export function run(){
 	let args = parseArgs(process.argv.slice(2));
 	let cmd: string = args._.shift();
 	switch(cmd){
@@ -16,5 +16,3 @@ function run(){
 			break;		
 	}
 }
-
-module.exports = run;

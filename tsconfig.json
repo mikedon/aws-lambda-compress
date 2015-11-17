@@ -5,7 +5,7 @@
         "noImplicitAny": false,
         "outDir": "build",
         "rootDir": "src",
-        "sourceMap": false
+        "sourceMap": true
     },
     "files": [
         "typings/tsd.d.ts",

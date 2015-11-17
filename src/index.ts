@@ -41,7 +41,7 @@ export class Dependency {
 	}
 }
 
-class LambdaFunction {
+export class LambdaFunction {
 	dependencies: Dependency[] = [];	
 	directory: string;
 	name: string;	
