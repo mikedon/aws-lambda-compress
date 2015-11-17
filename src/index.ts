@@ -14,28 +14,27 @@ import * as archiver from "archiver";
 import * as fs from "fs";
 import * as path from "path";
 import * as detective from "detective";
-// simple module that gives us the promisify functionality
+// simple module that gives us the promisify functionality with ES6 Promise
 import * as promisify from "es6-promisify";
 import * as mkdirp from "mkdirp";
 import * as resolve from "resolve";
 
 //promisify functions we'll need later
 let readDir = promisify<string[], string>(fs.readdir);
-let readFile = promisify<string, string, string>(fs.readFile);
 let makeDirectory = promisify(mkdirp);
 let stat = promisify<fs.Stats, string>(fs.stat);
 
-// main entry point.  <b>async</b> tells node there are await calls inside. 
+// main entry point -  <b>async</b> tells node there are await calls inside. 
 export async function compress(
 	// where all the lambda functions exist. each lambda function should exist as a directory under this
 	srcDir: string,
 	// a regexp representing which directories to treat as lambda functions 
 	pattern: string, 
-	// a list of dependencies to exclude for the archives
+	// a list of dependencies to exclude from the archives
 	excludes : string[],
 	// where to put all the archives 
 	outputDir: string,
-	// a list of extra directorie and files to include in each archive 
+	// a list of extra directories and files to include in each archive 
 	extras: string[]){
 	//async/await lets us write async code as if it was sync with standard try/catch	
 	try{	
@@ -43,7 +42,7 @@ export async function compress(
 		let dependencies: {[key: string]: string[]} = {};
 		//await the readDir promise to finish
 		let files = await readDir(srcDir);
-		//determine which things under srcDir are files and match the pattern, <b>await</b> the results
+		//<b>await</b> determine which things under srcDir are directories and match the pattern
 		let directories: string[] = await Promise.all(files.map((file) => {			
 			if(file.match(pattern) != null){
 				return stat(path.join(srcDir, file)).then(fileStat => {		
@@ -55,16 +54,16 @@ export async function compress(
 		}));						
 		for(let directory of directories){					
 			if(directory){//Because of how we are determining our list of directories above we can get "undefined" as a value in the array				
-				let lambdaFunction = new LambdaFunction(directory, srcDir);
-				//<b>await</b>								
-				await lambdaFunction.analyzeDependencies(excludes);								
+				let lambdaFunction = new LambdaFunction(directory, srcDir);												
+				lambdaFunction.analyzeDependencies(excludes); //TODO unable to make async b/c archiver is doing some funny stuff with cwd								
 				let outputDirectory = `${process.cwd()}/${outputDir}`;
 				//<b>await</b> the creation of the outputDirectory			
 				await makeDirectory(outputDirectory);
-				lambdaFunction.createArchive(outputDir, srcDir, extras);
+				lambdaFunction.createArchive(outputDir, srcDir, extras); 
 			}											
 		}	
 	}catch(err){
+		console.log("caught by try/catch");
 		console.error(err);
 	}		
 };
@@ -81,33 +80,21 @@ export class LambdaFunction {
 		this.directory = path.join(process.cwd(), srcDir, this.name);
 	}
 	
-	//<b>async</b> determing dependencies for the Lambda Function
-	async analyzeDependencies(excludes: string[]){
+	// determing dependencies for the Lambda Function
+	analyzeDependencies(excludes: string[]){
 		//default function args are not implemented yet
 		if(!excludes){
 			excludes = [];
 		}		
 		let allDependencies:string[] = [];
 		
-		//<b>async</b> a local function to handle resursively checking each source file for its dependencies
-		async function getDependencies(cwd: string, file: string){			
-			let absolutePath = path.resolve(cwd, `${file}.js`);		
-			//<b>await</b> for the file to be read and invoke the detective library which returns us the dependencies
-			let dependencies = detective(await readFile(absolutePath));
-			allDependencies = allDependencies.concat(dependencies);
-			//if the dependency is a relative one then follow it and grab its dependencies			
-			for(let d of dependencies){
-				if(d.indexOf(".") > -1){					
-					getDependencies(path.dirname(absolutePath), d);
-				}
-			}			
-		}
+		
 		//hold ont the original working directory so we can change it and set it back when we're done
 		let originalWorkingDirectory = process.cwd();
 		//change working directory to the lambda function
 		process.chdir(this.directory);
-		//get dependencies for lambda function, recursively following any local dependencies.  <b>await</b> because its an <b>async</b> function
-		await getDependencies("", `${this.directory}/index`);								
+		//get dependencies for lambda function, recursively following any local dependencies
+		getDependencies("", `${this.directory}/index`);								
 		for(let dependency of allDependencies){
 			//if the dependency is not excluded then add the dependency to this Lambda Function			
 			if(excludes.indexOf(dependency) < 0){					
@@ -119,10 +106,24 @@ export class LambdaFunction {
 		}
 		//change back to the working directory we started with
 		process.chdir(originalWorkingDirectory);
+		
+		//a local function to handle resursively checking each source file for its dependencies
+		function getDependencies(cwd: string, file: string){			
+			let absolutePath = path.resolve(cwd, `${file}.js`);		
+			//read file and invoke the detective library which returns us the dependencies
+			let dependencies = detective(fs.readFileSync(absolutePath)); //TODO async
+			allDependencies = allDependencies.concat(dependencies);
+			//if the dependency is a relative one then follow it and grab its dependencies			
+			for(let d of dependencies){
+				if(d.indexOf(".") > -1){					
+					getDependencies(path.dirname(absolutePath), d);
+				}
+			}			
+		}
 	}
 	
 	// creates the zip file
-	createArchive(outputDirectory: string, srcDir: string, extras: string[]){		
+	createArchive(outputDirectory: string, srcDir: string, extras: string[]){	
 		let stream = fs.createWriteStream(`${outputDirectory}/${this.name}.zip`);
 		stream.on("error", err => {			
 			console.log(err);				
@@ -143,7 +144,6 @@ export class LambdaFunction {
 		// add all the extras		
 		if(extras){
 			for(let extra of extras){
-				console.log(extra);	
 				if(extra.lastIndexOf(path.sep) === extra.length - 1){
 					archive.directory(extra);	
 				}else{					
@@ -155,6 +155,9 @@ export class LambdaFunction {
 		archive.on("error", err => {			
 			console.log(err);
 			process.exit(-1);
+		});
+		archive.on("end", () => {
+			console.log(`created archive for ${this.name}`);	
 		});
 		archive.finalize();
 	}
@@ -179,7 +182,7 @@ export class Dependency {
 			this.location = path.dirname(path.resolve("", this.name));
 		}else{										
 			//using node-resolve determine the absolute path location of the dependency, should be under node_modules
-			let dependencyLocationTokens = resolve.sync(this.name, {basedir: process.cwd()}).split(path.sep);
+			let dependencyLocationTokens = resolve.sync(this.name, {basedir: process.cwd()}).split(path.sep); //TODO async
 			//take the absolute path and remove everything after the subdirectory under node_modules to include the entire dependency														
 			let doneBuildingPath = false;
 			let i = 0;

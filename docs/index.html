@@ -130,7 +130,7 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
-              <p>simple module that gives us the promisify functionality</p>
+              <p>simple module that gives us the promisify functionality with ES6 Promise</p>
 
             </div>
             
@@ -152,7 +152,6 @@
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-keyword">let</span> readDir = promisify&lt;<span class="hljs-built_in">string</span>[], <span class="hljs-built_in">string</span>&gt;(fs.readdir);
-<span class="hljs-keyword">let</span> readFile = promisify&lt;<span class="hljs-built_in">string</span>, <span class="hljs-built_in">string</span>, <span class="hljs-built_in">string</span>&gt;(fs.readFile);
 <span class="hljs-keyword">let</span> makeDirectory = promisify(mkdirp);
 <span class="hljs-keyword">let</span> stat = promisify&lt;fs.Stats, <span class="hljs-built_in">string</span>&gt;(fs.stat);</pre></div></div>
             
@@ -165,7 +164,7 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-7">&#182;</a>
               </div>
-              <p>main entry point.  async tells node there are await calls inside. </p>
+              <p>main entry point -  <b>async</b> tells node there are await calls inside. </p>
 
             </div>
             
@@ -211,7 +210,7 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
-              <p>a list of dependencies to exclude for the archives</p>
+              <p>a list of dependencies to exclude from the archives</p>
 
             </div>
             
@@ -241,7 +240,7 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
-              <p>a list of extra directorie and files to include in each archive </p>
+              <p>a list of extra directories and files to include in each archive </p>
 
             </div>
             
@@ -288,7 +287,7 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
-              <p>determine which things under srcDir are files and match the pattern, await the results.  Uses es6 Promise</p>
+              <p><b>await</b> determine which things under srcDir are directories and match the pattern</p>
 
             </div>
             
@@ -300,11 +299,11 @@
 					}
 				});
 			}	
-		}));				
+		}));						
 		<span class="hljs-keyword">for</span>(<span class="hljs-keyword">let</span> directory of directories){					
 			<span class="hljs-keyword">if</span>(directory){<span class="hljs-comment">//Because of how we are determining our list of directories above we can get "undefined" as a value in the array				</span>
-				<span class="hljs-keyword">let</span> lambdaFunction = <span class="hljs-keyword">new</span> LambdaFunction(directory, srcDir);								
-				await lambdaFunction.analyzeDependencies(excludes);								
+				<span class="hljs-keyword">let</span> lambdaFunction = <span class="hljs-keyword">new</span> LambdaFunction(directory, srcDir);												
+				lambdaFunction.analyzeDependencies(excludes); <span class="hljs-comment">//TODO unable to make async b/c archiver is doing some funny stuff with cwd								</span>
 				<span class="hljs-keyword">let</span> outputDirectory = `${process.cwd()}/${outputDir}`;</pre></div></div>
             
         </li>
@@ -316,15 +315,16 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
-              <p>await the creation of the outputDirectory            </p>
+              <p><b>await</b> the creation of the outputDirectory            </p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>				await makeDirectory(outputDirectory);
-				await lambdaFunction.createArchive(outputDir, srcDir, extras);
+				lambdaFunction.createArchive(outputDir, srcDir, extras); 
 			}											
 		}	
 	}<span class="hljs-keyword">catch</span>(err){
+		<span class="hljs-built_in">console</span>.log(<span class="hljs-string">"caught by try/catch"</span>);
 		<span class="hljs-built_in">console</span>.error(err);
 	}		
 };</pre></div></div>
@@ -379,7 +379,7 @@
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>	async analyzeDependencies(excludes: <span class="hljs-built_in">string</span>[]){</pre></div></div>
+            <div class="content"><div class='highlight'><pre>	analyzeDependencies(excludes: <span class="hljs-built_in">string</span>[]){</pre></div></div>
             
         </li>
         
@@ -408,12 +408,11 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
-              <p>a local function to handle resursively checking each source file for its dependencies</p>
+              <p>hold ont the original working directory so we can change it and set it back when we’re done</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		async <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getDependencies</span>(<span class="hljs-params">cwd: <span class="hljs-built_in">string</span>, file: <span class="hljs-built_in">string</span></span>)</span>{			
-			<span class="hljs-keyword">let</span> absolutePath = path.resolve(cwd, `${file}.js`);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>		<span class="hljs-keyword">let</span> originalWorkingDirectory = process.cwd();</pre></div></div>
             
         </li>
         
@@ -424,12 +423,11 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
-              <p><b>await</b> for the file to be read and invoke the detective library which returns us the dependencies</p>
+              <p>change working directory to the lambda function</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="hljs-keyword">let</span> dependencies = detective(await readFile(absolutePath));
-			allDependencies = allDependencies.concat(dependencies);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>		process.chdir(<span class="hljs-keyword">this</span>.directory);</pre></div></div>
             
         </li>
         
@@ -440,16 +438,12 @@
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
-              <p>if the dependency is a relative one then follow it and grab its dependencies            </p>
+              <p>get dependencies for lambda function, recursively following any local dependencies.  <b>await</b> because its an <b>async</b> function</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="hljs-keyword">for</span>(<span class="hljs-keyword">let</span> d of dependencies){
-				<span class="hljs-keyword">if</span>(d.indexOf(<span class="hljs-string">"."</span>) &gt; -<span class="hljs-number">1</span>){					
-					getDependencies(path.dirname(absolutePath), d);
-				}
-			}			
-		}</pre></div></div>
+            <div class="content"><div class='highlight'><pre>		getDependencies(<span class="hljs-string">""</span>, `${<span class="hljs-keyword">this</span>.directory}/index`);								
+		<span class="hljs-keyword">for</span>(<span class="hljs-keyword">let</span> dependency of allDependencies){</pre></div></div>
             
         </li>
         
@@ -459,52 +453,6 @@
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-24">&#182;</a>
-              </div>
-              <p>hold ont the original working directory so we can change it and set it back when we’re done</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>		<span class="hljs-keyword">let</span> originalWorkingDirectory = process.cwd();</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-25">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
-              </div>
-              <p>change working directory to the lambda function</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>		process.chdir(<span class="hljs-keyword">this</span>.directory);</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-26">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
-              </div>
-              <p>get dependencies for lambda function, recursively following any local dependencies.  await because its an async function</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>		await getDependencies(<span class="hljs-string">""</span>, `${<span class="hljs-keyword">this</span>.directory}/index`);								
-		<span class="hljs-keyword">for</span>(<span class="hljs-keyword">let</span> dependency of allDependencies){</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-27">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p>if the dependency is not excluded then add the dependency to this Lambda Function            </p>
 
@@ -517,11 +465,11 @@
         </li>
         
         
-        <li id="section-28">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>find the exact directory where this dependency lives</p>
 
@@ -534,27 +482,70 @@
         </li>
         
         
+        <li id="section-26">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-26">&#182;</a>
+              </div>
+              <p>change back to the working directory we started with</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		process.chdir(originalWorkingDirectory);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-27">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-27">&#182;</a>
+              </div>
+              <p>a local function to handle resursively checking each source file for its dependencies</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getDependencies</span>(<span class="hljs-params">cwd: <span class="hljs-built_in">string</span>, file: <span class="hljs-built_in">string</span></span>)</span>{			
+			<span class="hljs-keyword">let</span> absolutePath = path.resolve(cwd, `${file}.js`);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-28">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-28">&#182;</a>
+              </div>
+              <p>read file and invoke the detective library which returns us the dependencies</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>			<span class="hljs-keyword">let</span> dependencies = detective(fs.readFileSync(absolutePath)); <span class="hljs-comment">//TODO async</span>
+			allDependencies = allDependencies.concat(dependencies);</pre></div></div>
+            
+        </li>
+        
+        
         <li id="section-29">
             <div class="annotation">
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-29">&#182;</a>
               </div>
-              <p>change back to the working directory we started with</p>
+              <p>if the dependency is a relative one then follow it and grab its dependencies            </p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>		process.chdir(originalWorkingDirectory);
-	}
-	
-	createArchive(outputDirectory: <span class="hljs-built_in">string</span>, srcDir: <span class="hljs-built_in">string</span>, extras: <span class="hljs-built_in">string</span>[]){
-		<span class="hljs-keyword">let</span> stream = fs.createWriteStream(`${outputDirectory}/${<span class="hljs-keyword">this</span>.name}.zip`);
-		stream.on(<span class="hljs-string">"error"</span>, err =&gt; {
-			<span class="hljs-built_in">console</span>.log(err);				
-			process.exit(-<span class="hljs-number">1</span>);
-		});
-		<span class="hljs-keyword">let</span> archive = archiver.create(<span class="hljs-string">'zip'</span>, {});
-		archive.pipe(stream);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>			<span class="hljs-keyword">for</span>(<span class="hljs-keyword">let</span> d of dependencies){
+				<span class="hljs-keyword">if</span>(d.indexOf(<span class="hljs-string">"."</span>) &gt; -<span class="hljs-number">1</span>){					
+					getDependencies(path.dirname(absolutePath), d);
+				}
+			}			
+		}
+	}</pre></div></div>
             
         </li>
         
@@ -564,6 +555,28 @@
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-30">&#182;</a>
+              </div>
+              <p>creates the zip file</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>	createArchive(outputDirectory: <span class="hljs-built_in">string</span>, srcDir: <span class="hljs-built_in">string</span>, extras: <span class="hljs-built_in">string</span>[]){	
+		<span class="hljs-keyword">let</span> stream = fs.createWriteStream(`${outputDirectory}/${<span class="hljs-keyword">this</span>.name}.zip`);
+		stream.on(<span class="hljs-string">"error"</span>, err =&gt; {			
+			<span class="hljs-built_in">console</span>.log(err);				
+			process.exit(-<span class="hljs-number">1</span>);
+		});
+		<span class="hljs-keyword">let</span> archive = archiver.create(<span class="hljs-string">'zip'</span>, {});
+		archive.pipe(stream);</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-31">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
               <p>place lambda function inside a directory in the zip - this way the source and final locations are the same        </p>
 
@@ -578,11 +591,11 @@
         </li>
         
         
-        <li id="section-31">
+        <li id="section-32">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-31">&#182;</a>
+                <a class="pilcrow" href="#section-32">&#182;</a>
               </div>
               <p>if its a relative module then we want the location in the zip to be relative to source dir</p>
 
@@ -590,15 +603,38 @@
             
             <div class="content"><div class='highlight'><pre>				archive.directory(path.relative(<span class="hljs-string">""</span>, dependency.location), path.relative(srcDir, dependency.location));
 			}									
+		}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-33">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-33">&#182;</a>
+              </div>
+              <p>add all the extras        </p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>		<span class="hljs-keyword">if</span>(extras){
+			<span class="hljs-keyword">for</span>(<span class="hljs-keyword">let</span> extra of extras){
+				<span class="hljs-keyword">if</span>(extra.lastIndexOf(path.sep) === extra.length - <span class="hljs-number">1</span>){
+					archive.directory(extra);	
+				}<span class="hljs-keyword">else</span>{					
+					archive.file(extra);
+				}
+				
+			}		
 		}
-		<span class="hljs-keyword">for</span>(<span class="hljs-keyword">let</span> extra of extras){			
-			<span class="hljs-keyword">if</span>(extra.lastIndexOf(path.sep) === extra.length - <span class="hljs-number">1</span>){
-				archive.directory(extra);	
-			}<span class="hljs-keyword">else</span>{
-				archive.file(extra);
-			}
-			
-		}
+		archive.on(<span class="hljs-string">"error"</span>, err =&gt; {			
+			<span class="hljs-built_in">console</span>.log(err);
+			process.exit(-<span class="hljs-number">1</span>);
+		});
+		archive.on(<span class="hljs-string">"end"</span>, () =&gt; {
+			<span class="hljs-built_in">console</span>.log(`created archive <span class="hljs-keyword">for</span> ${<span class="hljs-keyword">this</span>.name}`);	
+		});
 		archive.finalize();
 	}
 }</pre></div></div>
@@ -606,11 +642,11 @@
         </li>
         
         
-        <li id="section-32">
+        <li id="section-34">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-32">&#182;</a>
+                <a class="pilcrow" href="#section-34">&#182;</a>
               </div>
               <p>Represents an individual dependency for a Lambda Function.  Keeps track of its name and where its located on the filesystem for inclusion into the archive later on</p>
 
@@ -628,11 +664,11 @@
         </li>
         
         
-        <li id="section-33">
+        <li id="section-35">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-33">&#182;</a>
+                <a class="pilcrow" href="#section-35">&#182;</a>
               </div>
               <p>determine where this dependency is located    </p>
 
@@ -643,11 +679,11 @@
         </li>
         
         
-        <li id="section-34">
+        <li id="section-36">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-34">&#182;</a>
+                <a class="pilcrow" href="#section-36">&#182;</a>
               </div>
               <p>if its a relative or local dependency then we just need to find the directory the file exists in.  </p>
 
@@ -659,11 +695,11 @@
         </li>
         
         
-        <li id="section-35">
+        <li id="section-37">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-35">&#182;</a>
+                <a class="pilcrow" href="#section-37">&#182;</a>
               </div>
               <p>resolve the path from cwd to the name of the dependency which would some relative path</p>
 
@@ -675,26 +711,26 @@
         </li>
         
         
-        <li id="section-36">
+        <li id="section-38">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-36">&#182;</a>
+                <a class="pilcrow" href="#section-38">&#182;</a>
               </div>
               <p>using node-resolve determine the absolute path location of the dependency, should be under node_modules</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>			<span class="hljs-keyword">let</span> dependencyLocationTokens = resolve.sync(<span class="hljs-keyword">this</span>.name, {basedir: process.cwd()}).split(path.sep);</pre></div></div>
+            <div class="content"><div class='highlight'><pre>			<span class="hljs-keyword">let</span> dependencyLocationTokens = resolve.sync(<span class="hljs-keyword">this</span>.name, {basedir: process.cwd()}).split(path.sep); <span class="hljs-comment">//TODO async</span></pre></div></div>
             
         </li>
         
         
-        <li id="section-37">
+        <li id="section-39">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-37">&#182;</a>
+                <a class="pilcrow" href="#section-39">&#182;</a>
               </div>
               <p>take the absolute path and remove everything after the subdirectory under node_modules to include the entire dependency                                                        </p>
 
