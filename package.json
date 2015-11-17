@@ -24,7 +24,7 @@
     "typescript": "^1.8.0-dev.20151029"
   },
   "dependencies": {
-    "archiver": "^0.15.1",
+    "archiver": "^0.16.0",
     "aws-sdk": "^2.2.13",
     "detective": "^4.3.1",
     "es6-promisify": "^3.0.0",

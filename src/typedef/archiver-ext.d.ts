@@ -11,6 +11,7 @@ declare module "archiver" {
         finalize(): void;
 		directory(path: string, destpath?: string, data?: any): void;
         file(filePath: string, data?: any);
+        on(event:string, Function);
     }
     
     interface Options {

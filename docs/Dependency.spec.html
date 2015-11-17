@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Dependency.spec.ts</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+      <ul id="jump_to">
+        <li>
+          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
+          <a class="small" href="javascript:void(0);">+</a>
+          <div id="jump_wrapper">
+          <div id="jump_page_wrapper">
+            <div id="jump_page">
+              
+                
+                <a class="source" href="Compress.spec.html">
+                  Compress.spec.ts
+                </a>
+              
+                
+                <a class="source" href="Dependency.spec.html">
+                  Dependency.spec.ts
+                </a>
+              
+                
+                <a class="source" href="LambdaFunction.spec.html">
+                  LambdaFunction.spec.ts
+                </a>
+              
+                
+                <a class="source" href="cli.html">
+                  cli.ts
+                </a>
+              
+                
+                <a class="source" href="index.html">
+                  index.ts
+                </a>
+              
+            </div>
+          </div>
+        </li>
+      </ul>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>Dependency.spec.ts</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-pi">"use strict"</span>;
+
+<span class="hljs-keyword">import</span> {Dependency} from <span class="hljs-string">"./index"</span>;
+<span class="hljs-keyword">import</span> * as path from <span class="hljs-string">"path"</span>;
+<span class="hljs-keyword">import</span> * as resolve from <span class="hljs-string">"resolve"</span>;
+
+describe(<span class="hljs-string">"Dependeny Class"</span>, () =&gt; {	
+	it(<span class="hljs-string">"should build the location of a local module"</span>, () =&gt; {
+		<span class="hljs-keyword">let</span> resolveSpy = spyOn(path, <span class="hljs-string">"resolve"</span>);
+		resolveSpy.and.returnValue(<span class="hljs-string">"/absolute/path/local/lib.js"</span>);
+		
+		<span class="hljs-keyword">let</span> localModule = <span class="hljs-keyword">new</span> Dependency(<span class="hljs-string">"../local/lib"</span>);
+		
+		localModule.buildLocation();
+		
+		expect(resolveSpy).toHaveBeenCalled();
+		expect(localModule.location).toBe(<span class="hljs-string">"/absolute/path/local"</span>);
+	});
+	
+	it(<span class="hljs-string">"should build the location of a node module"</span>, () =&gt; {
+		<span class="hljs-keyword">let</span> resolveSpy = spyOn(resolve, <span class="hljs-string">"sync"</span>);
+		resolveSpy.and.returnValue(<span class="hljs-string">"/absolute/path/node_modules/test/build/index.js"</span>);
+		<span class="hljs-keyword">let</span> nodeModule = <span class="hljs-keyword">new</span> Dependency(<span class="hljs-string">"test"</span>);
+		nodeModule.buildLocation();
+		expect(resolveSpy).toHaveBeenCalled();
+		expect(nodeModule.location).toBe(<span class="hljs-string">"/absolute/path/node_modules/test/"</span>);
+	});
+});</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
