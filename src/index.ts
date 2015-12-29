@@ -19,6 +19,7 @@ import * as promisify from "es6-promisify";
 import * as mkdirp from "mkdirp";
 import * as resolve from "resolve";
 
+
 //promisify functions we'll need later
 let readDir = promisify<string[], string>(fs.readdir);
 let makeDirectory = promisify(mkdirp);
@@ -42,6 +43,9 @@ export async function compress(
 		let dependencies: {[key: string]: string[]} = {};
 		//await the readDir promise to finish
 		let files = await readDir(srcDir);
+		
+		let npmDependencies = require(resolve.sync("./package.json", {basedir: process.cwd()})).dependencies;
+		
 		//<b>await</b> determine which things under srcDir are directories and match the pattern
 		let directories: string[] = await Promise.all(files.map((file) => {			
 			if(file.match(pattern) != null){
@@ -55,7 +59,7 @@ export async function compress(
 		for(let directory of directories){					
 			if(directory){//Because of how we are determining our list of directories above we can get "undefined" as a value in the array				
 				let lambdaFunction = new LambdaFunction(directory, srcDir);												
-				lambdaFunction.analyzeDependencies(excludes); //TODO unable to make async b/c archiver is doing some funny stuff with cwd								
+				lambdaFunction.analyzeDependencies(excludes, npmDependencies); //TODO unable to make async b/c archiver is doing some funny stuff with cwd
 				let outputDirectory = `${process.cwd()}/${outputDir}`;
 				//<b>await</b> the creation of the outputDirectory			
 				await makeDirectory(outputDirectory);
@@ -72,22 +76,26 @@ export async function compress(
 export class LambdaFunction {
 	dependencies: Dependency[] = [];	
 	directory: string;
-	name: string;	
+	name: string;		
 	
 	constructor(name: string, srcDir: string){
 		this.name = name;
 		//set directory to cwd + srcDir + name
-		this.directory = path.join(process.cwd(), srcDir, this.name);
+		this.directory = path.join(process.cwd(), srcDir, this.name);	
 	}
 	
 	// determing dependencies for the Lambda Function
-	analyzeDependencies(excludes: string[]){
+	analyzeDependencies(excludes: string[], npmDependencies?: {[dependency:string]:string}){
 		//default function args are not implemented yet
 		if(!excludes){
 			excludes = [];
-		}		
+		}
 		let allDependencies:string[] = [];
-		
+		for(let npmDependency in npmDependencies){
+			if(excludes.indexOf(npmDependency) < 0){
+				allDependencies.push(npmDependency);		
+			}
+		}		
 		
 		//hold ont the original working directory so we can change it and set it back when we're done
 		let originalWorkingDirectory = process.cwd();
@@ -110,12 +118,12 @@ export class LambdaFunction {
 		//a local function to handle resursively checking each source file for its dependencies
 		function getDependencies(cwd: string, file: string){			
 			let absolutePath = path.resolve(cwd, `${file}.js`);		
-			//read file and invoke the detective library which returns us the dependencies
-			let dependencies = detective(fs.readFileSync(absolutePath)); //TODO async
-			allDependencies = allDependencies.concat(dependencies);
+			//read file and invoke the detective library which returns us the dependencies		
+			let dependencies = detective(fs.readFileSync(absolutePath)); //TODO async			
 			//if the dependency is a relative one then follow it and grab its dependencies			
 			for(let d of dependencies){
-				if(d.indexOf(".") > -1){					
+				if(d.indexOf(".") > -1){	
+					allDependencies.push(d);				
 					getDependencies(path.dirname(absolutePath), d);
 				}
 			}			
