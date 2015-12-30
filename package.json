@@ -6,6 +6,10 @@
   "bin": {
     "aws-lambda-compress": "./bin/aws-lambda-compress"
   },
+  "files": [
+    "bin/",
+    "build/"
+  ],
   "scripts": {
     "clean": "rm -rf build && rm -rf dist",
     "tsc": "tsc",
